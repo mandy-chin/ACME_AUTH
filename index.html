@@ -41,6 +41,7 @@
 
       const App = () => {
         const [auth, setAuth] = React.useState({});
+        const [notes, setNotes] = React.useState("");
 
         const attemptTokenLogin = async () => {
           const token = window.localStorage.getItem("token");
@@ -53,9 +54,22 @@
             setAuth(auth);
           }
         };
+
+        //auth {} -> filled obj {username, password etc}
         React.useEffect(() => {
           attemptTokenLogin();
         }, []);
+
+        //use effect always runs at least once after the first/initial render
+        React.useEffect(() => {
+          if (auth.username) {
+            const getData = async () => {
+              const { data } = await axios.get(`/api/users/${auth.id}/notes`);
+              setNotes(data);
+            };
+            getData();
+          }
+        }, [auth]);
 
         const logout = () => {
           window.localStorage.removeItem("token");
@@ -73,7 +87,9 @@
 
         return (
           <div>
-            Welcome {auth.username}!<button onClick={logout}>Logout</button>
+            Welcome {auth.username}!
+            <ul>{!notes ? "" : notes.map((note) => <li>{note.text}</li>)}</ul>
+            <button onClick={logout}>Logout</button>
           </div>
         );
       };

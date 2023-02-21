@@ -1,10 +1,9 @@
 const express = require("express");
 const app = express();
 const {
-  models: { User },
+  models: { User, Note },
 } = require("./db");
 const path = require("path");
-const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 // middleware
@@ -12,6 +11,21 @@ app.use(express.json());
 
 // routes
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
+
+app.get("/api/users/:id/notes", async (req, res, next) => {
+  try {
+    const user = await User.findOne({
+      where: { id: req.params.id },
+      include: {
+        model: Note,
+        attributes: ["text"],
+      },
+    });
+    res.send(user.notes);
+  } catch (err) {
+    next(err);
+  }
+});
 
 app.post("/api/auth", async (req, res, next) => {
   try {

@@ -9,10 +9,38 @@ require("dotenv").config();
 // middleware
 app.use(express.json());
 
+const requireToken = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization;
+    console.log(token)
+    const user = await User.byToken(token);
+    req.user = user;
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
 // routes
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
-app.get("/api/users/:id/notes", async (req, res, next) => {
+app.post("/api/auth", async (req, res, next) => {
+  try {
+    res.send({ token: await User.authenticate(req.body) });
+  } catch (ex) {
+    next(ex);
+  }
+});
+
+app.get("/api/auth", requireToken, async (req, res, next) => {
+  try {
+    res.send(req.user);
+  } catch (ex) {
+    next(ex);
+  }
+});
+
+app.get("/api/users/:id/notes", requireToken, async (req, res, next) => {
   try {
     const user = await User.findOne({
       where: { id: req.params.id },
@@ -24,22 +52,6 @@ app.get("/api/users/:id/notes", async (req, res, next) => {
     res.send(user.notes);
   } catch (err) {
     next(err);
-  }
-});
-
-app.post("/api/auth", async (req, res, next) => {
-  try {
-    res.send({ token: await User.authenticate(req.body) });
-  } catch (ex) {
-    next(ex);
-  }
-});
-
-app.get("/api/auth", async (req, res, next) => {
-  try {
-    res.send(await User.byToken(req.headers.authorization));
-  } catch (ex) {
-    next(ex);
   }
 });
 

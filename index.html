@@ -64,7 +64,9 @@
         React.useEffect(() => {
           if (auth.username) {
             const getData = async () => {
-              const { data } = await axios.get(`/api/users/${auth.id}/notes`);
+              const { data } = await axios.get(`/api/users/${auth.id}/notes`, {
+                headers: {authorization: window.localStorage.getItem("token"),}
+              });
               setNotes(data);
             };
             getData();
